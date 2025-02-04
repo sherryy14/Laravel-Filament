@@ -34,8 +34,11 @@ class UserResource extends Resource
             ->schema([
                 //add user form
                 TextInput::make('name')->required(),
-                TextInput::make('email')->email()->unique()->required(),
+                TextInput::make('email')->email()->unique(ignoreRecord:true)->required(),
                 TextInput::make('password')->password()->revealable()->required(),
+                Forms\Components\Select::make('role')
+                    ->options(User::ROLES)
+                    ->required(),
 
             ]);
     }
@@ -47,6 +50,15 @@ class UserResource extends Resource
                 // display users
                 TextColumn::make('name')->searchable(),
                 TextColumn::make('email')->searchable(),
+                TextColumn::make('role')->sortable()
+                ->badge()
+                ->color(function (string $state): string {
+                        return match ($state){
+                            'ADMIN' => 'success',
+                            'EDITOR' => 'warning',
+                            'USER' => 'info',
+                        };
+                    })
             ])
             ->filters([
                 //

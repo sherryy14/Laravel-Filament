@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\CategoryResource\RelationManagers\PostsRelationManager;
 use Filament\Forms;
 use App\Models\Post;
 use Filament\Tables;
 use App\Models\Category;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use Nette\Utils\ImageColor;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Group;
@@ -20,13 +20,14 @@ use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\FileUpload;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Forms\Components\MarkdownEditor;
-use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\PostResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\PostResource\RelationManagers;
+use App\Filament\Resources\CategoryResource\RelationManagers\PostsRelationManager;
 
 class PostResource extends Resource
 {
@@ -43,9 +44,19 @@ class PostResource extends Resource
                     ->schema([
 
                         TextInput::make('title')
-                            ->required(),
+                            ->required()
+                            ->live(onBlur:true)
+                            ->afterStateUpdated(function (string $operation, string $state, Forms\Set $set){
+                                if ($operation === 'create') {
+                                    if($state !==''){
+                                        $set('slug', Str::slug($state));
+                                    }
+                                }
+                            })
+                            ,
                         TextInput::make('slug')
                             ->unique(ignoreRecord: true)
+                            ->live()
                             ->required(),
                         ColorPicker::make('color')
                             ->required(),
@@ -54,7 +65,6 @@ class PostResource extends Resource
                             ->relationship('category', 'name')
                             ->searchable()
                             ->required(),
-                        // Select::make('category_id')->label('Category')->options(Category::all()->pluck('name', 'id'))->required(),
                         MarkdownEditor::make('content')
                             ->required()
                             ->columnSpanFull(),

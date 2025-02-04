@@ -7,6 +7,7 @@ use Filament\Tables;
 use App\Models\Category;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use Filament\Support\Markdown;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
@@ -34,8 +35,18 @@ class CategoryResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('name')->required(),
-                TextInput::make('slug')->required()->unique(),
+                TextInput::make('name')
+                ->required()
+                ->minLength(1)
+                ->maxLength(150)
+                ->live(onBlur:true)
+                ->afterStateUpdated(function (string $operation, string $state, Forms\Set $set){
+                    if ($operation === 'create') {
+                        $set('slug', Str::slug($state));
+                    }
+                })
+                ,
+                TextInput::make('slug')->required()->unique(ignoreRecord:true),
 
             ])->columns(2);
     }
